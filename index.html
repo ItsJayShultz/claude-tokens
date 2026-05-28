@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stop Hitting Claude's Limits — Token Saving Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #faf8f5;
+    --surface: #f0ece5;
+    --card: #ffffff;
+    --border: #e0d9cf;
+    --border-strong: #c8bfb0;
+    --accent: #c4501a;
+    --accent-light: #fdf0eb;
+    --accent2: #1a6b3a;
+    --accent2-light: #edf7f1;
+    --warning-light: #fff8e6;
+    --warning-border: #f0c050;
+    --warning: #7a4f00;
+    --text: #1a1814;
+    --muted: #7a7168;
+    --code: #5b3db5;
+    --code-bg: #f0edfb;
+    --blue: #1a4f8a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 64px 48px 48px;
+    border-bottom: 1px solid var(--border);
+    max-width: 780px;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-light);
+    border: 1px solid rgba(196,80,26,0.2);
+    padding: 4px 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: clamp(28px, 4vw, 46px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+
+  h1 em { font-style: normal; color: var(--accent); }
+
+  .hero-sub {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 520px;
+    margin-bottom: 28px;
+  }
+
+  /* LAYOUT */
+  .body-wrap { display: flex; flex: 1; }
+
+  .sidebar {
+    width: 210px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 40px 0 40px 24px;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .sidebar-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 16px 12px 0;
+    margin-bottom: 4px;
+  }
+
+  .sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px 8px 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--muted);
+    border-right: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    cursor: default;
+  }
+
+  .sidebar a:hover { color: var(--text); }
+  .sidebar a.active { color: var(--accent); border-right-color: var(--accent); }
+  .sidebar a .num { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--border-strong); min-width: 18px; }
+  .sidebar a.active .num { color: var(--accent); }
+
+  .main { flex: 1; padding: 0 48px 80px; min-width: 0; }
+
+  section { padding: 56px 0 0; }
+
+  h2 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  h2 .snum {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+  }
+
+  .section-desc {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::before { content: ''; display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .card-title.blue::before { background: var(--blue); }
+  .card-title.green::before { background: var(--accent2); }
+  .card-title.purple::before { background: var(--code); }
+
+  /* TOKEN COST TABLE */
+  .token-table { width: 100%; border-collapse: collapse; }
+  .token-table tr { border-bottom: 1px solid var(--border); }
+  .token-table tr:last-child { border-bottom: none; }
+  .token-table td { padding: 10px 12px; font-size: 14px; vertical-align: middle; }
+  .token-table td:first-child { font-weight: 700; color: var(--text); width: 35%; }
+  .token-table td:nth-child(2) { color: var(--muted); font-size: 13px; }
+  .token-table td:last-child { text-align: right; }
+
+  .cost-badge {
+    display: inline-flex;
+    align-items: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .cost-high { background: #fff0f0; color: #a32d2d; }
+  .cost-med { background: var(--warning-light); color: var(--warning); }
+  .cost-low { background: var(--accent2-light); color: var(--accent2); }
+
+  /* TIP LIST */
+  .tip-list { list-style: none; }
+  .tip-list li {
+    display: flex;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--surface);
+    align-items: flex-start;
+    font-size: 14px;
+    color: #333;
+    line-height: 1.6;
+  }
+  .tip-list li:last-child { border-bottom: none; }
+  .tip-list .tip-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* SHORTCUT CODE TABLE */
+  .code-table { width: 100%; border-collapse: collapse; }
+  .code-table tr { border-bottom: 1px solid var(--border); }
+  .code-table tr:last-child { border-bottom: none; }
+  .code-table td { padding: 10px 12px; font-size: 13px; vertical-align: top; }
+  .code-table td:first-child {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    width: 120px;
+    white-space: nowrap;
+  }
+  .code-table td:nth-child(2) { color: #444; }
+  .code-table td:last-child { color: var(--muted); font-size: 12px; font-style: italic; }
+
+  /* CAVEMAN TABLE */
+  .caveman-table { width: 100%; border-collapse: collapse; }
+  .caveman-table tr { border-bottom: 1px solid var(--border); }
+  .caveman-table tr:last-child { border-bottom: none; }
+  .caveman-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 12px;
+    background: var(--surface);
+  }
+  .caveman-table td { padding: 10px 12px; font-size: 13px; vertical-align: top; color: #333; }
+  .caveman-table td:first-child { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; color: var(--code); white-space: nowrap; }
+
+  /* BULLET LIST */
+  .bullet-list { list-style: none; }
+  .bullet-list li {
+    font-size: 14px;
+    color: #333;
+    padding: 5px 0 5px 18px;
+    position: relative;
+    line-height: 1.6;
+  }
+  .bullet-list li::before { content: '→'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+  /* WARNING */
+  .warning-box {
+    background: var(--warning-light);
+    border: 1px solid var(--warning-border);
+    border-left: 4px solid #d4900a;
+    border-radius: 0 10px 10px 0;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: #5a3c00;
+    line-height: 1.6;
+  }
+
+  .warning-box strong { color: var(--warning); }
+
+  /* STATS */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  .stat-card { background: var(--surface); border-radius: 10px; padding: 16px 20px; text-align: center; }
+  .stat-num { font-size: 28px; font-weight: 800; color: var(--accent); line-height: 1.1; margin-bottom: 4px; }
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: 0.04em; }
+
+  /* IG PILL */
+  .ig-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+  }
+
+  .ig-icon {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ig-follow {
+    font-size: 12px; font-weight: 700; color: white;
+    background: var(--accent); padding: 7px 16px;
+    border-radius: 20px; text-decoration: none;
+    white-space: nowrap; margin-left: 4px;
+  }
+
+  p { font-size: 14px; color: #333; line-height: 1.7; margin-bottom: 10px; }
+  p strong { font-weight: 700; color: var(--text); }
+  p code {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    background: var(--code-bg);
+    color: var(--code);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  footer {
+    padding: 24px 48px 32px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  footer a { color: var(--blue); text-decoration: none; }
+
+  /* MOBILE */
+  @media (max-width: 700px) {
+    .hero { padding: 36px 20px 32px; }
+    .sidebar { display: none; }
+    .main { padding: 0 20px 60px; }
+    .two-col { grid-template-columns: 1fr; }
+    .code-table td:last-child { display: none; }
+    footer { padding: 24px 20px 32px; flex-direction: column; text-align: center; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 20px; }
+    .token-table td:nth-child(2) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">Claude · Token & Limits Guide</div>
+  <h1>Stop Hitting<br><em>Claude's Limits</em></h1>
+  <p style="font-size:14px;font-weight:700;color:var(--muted);margin-bottom:16px;margin-top:-8px;">by @itsjayshultz</p>
+  <p class="hero-sub">Most people burn through their Claude tokens without realising it. Here's exactly what costs the most — and how to use 50% less without losing any quality.</p>
+
+  <div class="ig-pill">
+    <div class="ig-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+    </div>
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.3;">@itsjayshultz</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.3;">drop a follow on instagram, I beg you...</div>
+    </div>
+    <a href="https://instagram.com/itsjayshultz" target="_blank" class="ig-follow">Follow</a>
+  </div>
+</div>
+
+<div class="body-wrap">
+
+  <aside class="sidebar">
+    <div class="sidebar-label">Contents</div>
+    <a href="#how-limits-work"><span class="num">01</span>How limits work</a>
+    <a href="#what-costs-most"><span class="num">02</span>What costs most</a>
+    <a href="#file-formats"><span class="num">03</span>File formats</a>
+    <a href="#track-usage"><span class="num">04</span>Track your usage</a>
+    <a href="#caveman-mode"><span class="num">05</span>Caveman mode</a>
+    <a href="#shortcut-codes"><span class="num">06</span>Shortcut codes</a>
+    <a href="#quick-wins"><span class="num">07</span>Quick wins</a>
+  </aside>
+
+  <main class="main">
+
+    <!-- 01 HOW LIMITS WORK -->
+    <section id="how-limits-work">
+      <h2><span class="snum">01</span> How Claude's Limits Work</h2>
+      <p class="section-desc">There are two separate limits running at the same time. Most people only know about one.</p>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">5-Hour Limit</div>
+          <p style="font-size:13px;margin:0;">A rolling window that resets every 5 hours. This is the one you hit most often — heavy sessions drain it fast.</p>
+        </div>
+        <div class="card">
+          <div class="card-title blue">7-Day Limit</div>
+          <p style="font-size:13px;margin:0;">A weekly cap that resets every 7 days. Harder to hit, but uploading large files repeatedly will get you there.</p>
+        </div>
+      </div>
+
+      <div class="warning-box">
+        <strong>The hidden problem:</strong> Every message in a conversation gets re-read by Claude every single time you send a new one. The longer your conversation, the more tokens each reply costs — even if you only asked one short question.
+      </div>
+    </section>
+
+    <!-- 02 WHAT COSTS MOST -->
+    <section id="what-costs-most">
+      <h2><span class="snum">02</span> What Costs the Most Tokens</h2>
+      <p class="section-desc">Not all inputs are equal. Some formats burn through your limit 2x faster than others.</p>
+
+      <div class="card">
+        <div class="card-title">Token Cost by Input Type</div>
+        <table class="token-table">
+          <tr>
+            <td>Raw PDF</td>
+            <td>Full text extraction, every word counted</td>
+            <td><span class="cost-badge cost-high">~3,000 tokens</span></td>
+          </tr>
+          <tr>
+            <td>Screenshot of doc</td>
+            <td>Image + OCR processing</td>
+            <td><span class="cost-badge cost-med">~1,500 tokens</span></td>
+          </tr>
+          <tr>
+            <td>Markdown file</td>
+            <td>Plain text, no overhead</td>
+            <td><span class="cost-badge cost-low">~500 tokens</span></td>
+          </tr>
+          <tr>
+            <td>Long conversation</td>
+            <td>Full history re-read every reply</td>
+            <td><span class="cost-badge cost-high">Compounds fast</span></td>
+          </tr>
+          <tr>
+            <td>Google Doc (pasted)</td>
+            <td>Plain text, no formatting noise</td>
+            <td><span class="cost-badge cost-low">Efficient</span></td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- 03 FILE FORMATS -->
+    <section id="file-formats">
+      <h2><span class="snum">03</span> Use the Right File Format</h2>
+      <p class="section-desc">Switching from PDF to markdown is the single biggest token saving most people can make.</p>
+
+      <div class="card">
+        <div class="card-title green">The Simple Rule</div>
+        <ul class="bullet-list">
+          <li>Never upload a raw PDF if you can avoid it — it costs ~3,000 tokens per document</li>
+          <li>Take a screenshot of the document instead — cuts the cost roughly in half (~1,500 tokens)</li>
+          <li>Better still: open the doc in Google Docs → File → Download → Markdown (.md) — then drag that into Claude</li>
+          <li>Or just copy-paste the text directly — plain text is the cheapest input of all</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title blue">How to Export as Markdown from Google Docs</div>
+        <ul class="tip-list">
+          <li><span class="tip-num">1</span>Open your document in Google Docs</li>
+          <li><span class="tip-num">2</span>Click <strong>File → Download → Markdown (.md)</strong></li>
+          <li><span class="tip-num">3</span>Drag the downloaded .md file into Claude</li>
+          <li><span class="tip-num">4</span>Same content, fraction of the token cost</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 04 TRACK USAGE -->
+    <section id="track-usage">
+      <h2><span class="snum">04</span> Track Your Token Usage</h2>
+      <p class="section-desc">You can't manage what you can't see. Here's how to monitor your usage in real time.</p>
+
+      <div class="card">
+        <div class="card-title">Built-in Claude Usage Bar</div>
+        <p style="font-size:13px;margin-bottom:8px;">At the bottom of the Claude chat window you can see two bars:</p>
+        <ul class="bullet-list">
+          <li><strong>Session:</strong> your 5-hour rolling usage (e.g. "48% · resets in 2h 57m")</li>
+          <li><strong>Weekly:</strong> your 7-day usage (e.g. "13% · resets in 6d 0h")</li>
+        </ul>
+        <p style="font-size:13px;margin-top:10px;margin-bottom:0;color:var(--muted);">Check this before starting a heavy session so you know how much runway you have.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title purple">Claude Counter Chrome Extension</div>
+        <p style="font-size:13px;margin-bottom:8px;">Install <strong>Claude Counter</strong> from the Chrome Web Store. It shows you exactly how many tokens each message costs, in real time.</p>
+        <ul class="bullet-list">
+          <li>See token count per message as you type</li>
+          <li>Track cumulative session usage</li>
+          <li>Instantly see which inputs are burning your limit</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 05 CAVEMAN MODE -->
+    <section id="caveman-mode">
+      <h2><span class="snum">05</span> Caveman Mode</h2>
+      <p class="section-desc">A custom instruction that cuts token usage by ~75% by having Claude respond in ultra-compressed language — while keeping full technical accuracy.</p>
+
+      <div class="card">
+        <div class="card-title">What is Caveman Mode?</div>
+        <p style="font-size:13px;">A Claude customisation (available on GitHub: <a href="https://github.com/JuliusBrussee/caveman" target="_blank" style="color:var(--blue);font-weight:700;">JuliusBrussee/caveman</a>) that makes Claude drop filler words, articles, and padding. Instead of "Sure! I'd be happy to help you with that. The issue you're experiencing is..." — you get "Fix: [solution]."</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title blue">Intensity Levels</div>
+        <table class="caveman-table">
+          <tr><th>Level</th><th>What it does</th></tr>
+          <tr><td>lite</td><td>No filler or hedging. Keeps articles and full sentences. Professional tone.</td></tr>
+          <tr><td>full</td><td>Drops articles, fragments OK, short synonyms. Classic caveman.</td></tr>
+          <tr><td>ultra</td><td>Abbreviates everything (DB, auth, config, req, res). Strip to bare minimum.</td></tr>
+          <tr><td>wenyan-lite</td><td>Semi-classical style. Drop filler but keep grammar structure.</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title green">How to activate it</div>
+        <ul class="tip-list">
+          <li><span class="tip-num">1</span>Go to Claude → <strong>Customizations</strong> (or Custom Instructions)</li>
+          <li><span class="tip-num">2</span>Name it <strong>caveman-token-reducer</strong></li>
+          <li><span class="tip-num">3</span>Paste the instructions from the GitHub repo: <a href="https://github.com/JuliusBrussee/caveman" target="_blank" style="color:var(--blue);font-weight:700;">github.com/JuliusBrussee/caveman</a></li>
+          <li><span class="tip-num">4</span>Trigger it by typing <strong>"use caveman"</strong>, <strong>"less tokens"</strong>, or <strong>"be brief"</strong> in any chat</li>
+        </ul>
+        <div class="warning-box" style="margin-top:14px;margin-bottom:0;">
+          <strong>Note:</strong> Caveman mode automatically turns off for security warnings, irreversible actions, and multi-step operations where clarity matters. It's smart about when to stay compressed.
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 SHORTCUT CODES -->
+    <section id="shortcut-codes">
+      <h2><span class="snum">06</span> Shortcut Codes</h2>
+      <p class="section-desc">Prefix these words before your prompt to change how Claude responds — shorter, sharper, more useful output every time.</p>
+
+      <div class="card">
+        <div class="card-title">11 Shortcut Codes That Save Tokens</div>
+        <table class="code-table">
+          <tr>
+            <td>BLUNT:</td>
+            <td>No hedging, no caveats, no disclaimers. Just the answer.</td>
+            <td>"BLUNT: Should I use React or Next.js?"</td>
+          </tr>
+          <tr>
+            <td>BRUTAL:</td>
+            <td>Brutal honesty, no compliment sandwich. Tell me exactly what's wrong.</td>
+            <td>"BRUTAL: Review my résumé and tell me why I'm not getting interviews."</td>
+          </tr>
+          <tr>
+            <td>ASSUME:</td>
+            <td>List all hidden assumptions you're making before answering.</td>
+            <td>"ASSUME: How long will it take me to learn machine learning?"</td>
+          </tr>
+          <tr>
+            <td>COUNTER:</td>
+            <td>Generate the strongest counterargument to my point or plan.</td>
+            <td>"COUNTER: I think building in public is always good for a startup."</td>
+          </tr>
+          <tr>
+            <td>CONTRAST:</td>
+            <td>Force an explicit side-by-side comparison before concluding.</td>
+            <td>"CONTRAST: MongoDB vs PostgreSQL for a social media app."</td>
+          </tr>
+          <tr>
+            <td>SCOPE:</td>
+            <td>Define and constrain the exact problem space before solving it.</td>
+            <td>"SCOPE: How do I improve my app's performance?"</td>
+          </tr>
+          <tr>
+            <td>ZOOM:</td>
+            <td>Alternate between tactical detail and strategic altitude.</td>
+            <td>"ZOOM: How should I approach learning system design?"</td>
+          </tr>
+          <tr>
+            <td>POST:</td>
+            <td>Post-mortem mode — analyse what went wrong and why, no sugarcoating.</td>
+            <td>"POST: My side project got no users after 3 months. Here's what I did."</td>
+          </tr>
+          <tr>
+            <td>2ND_FX:</td>
+            <td>Map the cascade effects of this decision two levels deep.</td>
+            <td>"2ND_FX: What happens if I drop out of college to start a company?"</td>
+          </tr>
+          <tr>
+            <td>LADDER:</td>
+            <td>Answer at three levels — beginner, intermediate, expert — in that order.</td>
+            <td>"LADDER: Explain how transformers work in AI."</td>
+          </tr>
+          <tr>
+            <td>STEELMAN:</td>
+            <td>Give me the strongest possible version of the opposing argument.</td>
+            <td>"STEELMAN: The case against using AI tools as a student."</td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- 07 QUICK WINS -->
+    <section id="quick-wins">
+      <h2><span class="snum">07</span> Quick Wins — Do These Today</h2>
+      <p class="section-desc">Simple habits that save tokens every single session without changing how you work.</p>
+
+      <div class="card">
+        <div class="card-title green">7 Habits That Cut Your Usage in Half</div>
+        <ul class="tip-list">
+          <li><span class="tip-num">1</span>Start a new conversation for each new topic — don't let one chat grow for days</li>
+          <li><span class="tip-num">2</span>Use markdown files instead of PDFs whenever possible</li>
+          <li><span class="tip-num">3</span>Paste text directly instead of uploading documents for short content</li>
+          <li><span class="tip-num">4</span>Install Claude Counter to see what's actually costing you</li>
+          <li><span class="tip-num">5</span>Use BLUNT: or BRUTAL: prefixes to get shorter, direct answers</li>
+          <li><span class="tip-num">6</span>Set up Caveman Mode for any technical or repetitive work</li>
+          <li><span class="tip-num">7</span>Check your usage bars before starting a heavy session</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- BOTTOM IG PILL -->
+<div style="text-align:center;padding:40px 20px 24px;border-top:1px solid var(--border);">
+  <div class="ig-pill" style="display:inline-flex;">
+    <div class="ig-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+    </div>
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.3;">@itsjayshultz</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.3;">drop a follow on instagram, I beg you...</div>
+    </div>
+    <a href="https://instagram.com/itsjayshultz" target="_blank" class="ig-follow">Follow</a>
+  </div>
+</div>
+
+<footer>
+  <span>Compiled by @itsjayshultz · Last updated: May 2026</span>
+  <span>Sources: Claude docs · <a href="https://github.com/JuliusBrussee/caveman" target="_blank">JuliusBrussee/caveman</a> · Chrome Web Store</span>
+</footer>
+
+<script>
+  const sidebarLinks = document.querySelectorAll('.sidebar a');
+  sidebarLinks.forEach(link => {
+    link.addEventListener('click', e => e.preventDefault());
+  });
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        sidebarLinks.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`.sidebar a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-10% 0px -80% 0px' });
+
+  document.querySelectorAll('section[id]').forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
