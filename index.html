@@ -222,6 +222,12 @@
     color: #333;
     line-height: 1.6;
   }
+  .tip-list li > *:last-child {
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    flex: 1;
+  }
   .tip-list li:last-child { border-bottom: none; }
   .tip-list .tip-num {
     display: flex;
@@ -480,10 +486,10 @@
       <div class="card">
         <div class="card-title blue">How to Export as Markdown from Google Docs</div>
         <ul class="tip-list">
-          <li><span class="tip-num">1</span>Open your document in Google Docs</li>
-          <li><span class="tip-num">2</span>Click <strong>File → Download → Markdown (.md)</strong></li>
-          <li><span class="tip-num">3</span>Drag the downloaded .md file into Claude</li>
-          <li><span class="tip-num">4</span>Same content, fraction of the token cost</li>
+          <li><span class="tip-num">1</span><span>Open your document in Google Docs</span></li>
+          <li><span class="tip-num">2</span><span>Click File → Download → Markdown (.md)</span></li>
+          <li><span class="tip-num">3</span><span>Drag the downloaded .md file into Claude</span></li>
+          <li><span class="tip-num">4</span><span>Same content, fraction of the token cost</span></li>
         </ul>
       </div>
     </section>
@@ -538,10 +544,10 @@
       <div class="card">
         <div class="card-title green">How to activate it</div>
         <ul class="tip-list">
-          <li><span class="tip-num">1</span>Go to Claude → Customizations (or Custom Instructions)</li>
-          <li><span class="tip-num">2</span>Name it <span style="font-weight:700;color:var(--text);">caveman-token-reducer</span></li>
-          <li><span class="tip-num">3</span>Paste the instructions from the GitHub repo: <a href="https://github.com/JuliusBrussee/caveman" target="_blank" style="color:var(--blue);font-weight:700;white-space:nowrap;">github.com/JuliusBrussee/caveman</a></li>
-          <li><span class="tip-num">4</span>Trigger it by typing <span style="font-weight:700;color:var(--text);">"use caveman"</span>, <span style="font-weight:700;color:var(--text);">"less tokens"</span>, or <span style="font-weight:700;color:var(--text);">"be brief"</span> in any chat</li>
+          <li><span class="tip-num">1</span><span>Go to Claude → Customizations (or Custom Instructions)</span></li>
+          <li><span class="tip-num">2</span><span>Name it <span style="font-weight:700;color:var(--text);">caveman-token-reducer</span></span></li>
+          <li><span class="tip-num">3</span><span>Paste the instructions from the GitHub repo: <a href="https://github.com/JuliusBrussee/caveman" target="_blank" style="color:var(--blue);font-weight:700;">github.com/JuliusBrussee/caveman</a></span></li>
+          <li><span class="tip-num">4</span><span>Trigger it by typing <span style="font-weight:700;color:var(--text);">"use caveman"</span>, <span style="font-weight:700;color:var(--text);">"less tokens"</span>, or <span style="font-weight:700;color:var(--text);">"be brief"</span> in any chat</span></li>
         </ul>
         <div class="warning-box" style="margin-top:14px;margin-bottom:0;">
           <strong>Note:</strong> Caveman mode automatically turns off for security warnings, irreversible actions, and multi-step operations where clarity matters. It's smart about when to stay compressed.
@@ -624,13 +630,13 @@
       <div class="card">
         <div class="card-title green">7 Habits That Cut Your Usage in Half</div>
         <ul class="tip-list">
-          <li><span class="tip-num">1</span>Start a new conversation for each new topic — don't let one chat grow for days</li>
-          <li><span class="tip-num">2</span>Use markdown files instead of PDFs whenever possible</li>
-          <li><span class="tip-num">3</span>Paste text directly instead of uploading documents for short content</li>
-          <li><span class="tip-num">4</span>Install Claude Counter to see what's actually costing you</li>
-          <li><span class="tip-num">5</span>Use BLUNT: or BRUTAL: prefixes to get shorter, direct answers</li>
-          <li><span class="tip-num">6</span>Set up Caveman Mode for any technical or repetitive work</li>
-          <li><span class="tip-num">7</span>Check your usage bars before starting a heavy session</li>
+          <li><span class="tip-num">1</span><span>Start a new conversation for each new topic — don't let one chat grow for days</span></li>
+          <li><span class="tip-num">2</span><span>Use markdown files instead of PDFs whenever possible</span></li>
+          <li><span class="tip-num">3</span><span>Paste text directly instead of uploading documents for short content</span></li>
+          <li><span class="tip-num">4</span><span>Install Claude Counter to see what's actually costing you</span></li>
+          <li><span class="tip-num">5</span><span>Use BLUNT: or BRUTAL: prefixes to get shorter, direct answers</span></li>
+          <li><span class="tip-num">6</span><span>Set up Caveman Mode for any technical or repetitive work</span></li>
+          <li><span class="tip-num">7</span><span>Check your usage bars before starting a heavy session</span></li>
         </ul>
       </div>
     </section>
